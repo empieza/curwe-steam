@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curwe Steam - Автоматическое пополнение баланса</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <div class="logo-icon">
+                    <div class="logo-part part1"></div>
+                    <div class="logo-part part2"></div>
+                    <div class="logo-part part3"></div>
+                </div>
+                <h1>Curwe Steam</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#profile">Профиль</a></li>
+                    <li><a href="#topup">Пополнение</a></li>
+                    <li><a href="#history">История</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section id="profile" class="profile-section">
+            <div class="container">
+                <h2>Информация о профиле Steam</h2>
+                <div class="profile-info">
+                    <div class="avatar-container">
+                        <img id="steam-avatar" src="images/steam-avatar-placeholder.svg" alt="Аватар Steam">
+                    </div>
+                    <div class="profile-details">
+                        <p><strong>Steam ID:</strong> <span id="steam-id">Не указан</span></p>
+                        <p><strong>Никнейм:</strong> <span id="steam-nickname">Не указан</span></p>
+                        <p><strong>Уровень Steam:</strong> <span id="steam-level">-</span></p>
+                        <p><strong>Статус:</strong> <span id="steam-status">-</span></p>
+                        <p><strong>Текущий баланс:</strong> <span id="steam-balance">0.00 ₽</span></p>
+                    </div>
+                </div>
+                <div class="steam-id-input">
+                    <label for="steam-id-input">Введите ваш Steam ID, Custom URL или SteamID64:</label>
+                    <input type="text" id="steam-id-input" placeholder="STEAM_0:0:12345678 или mycustomurl">
+                    <button id="fetch-profile">Загрузить профиль</button>
+                    <div class="examples">
+                        Примеры: 
+                        <span onclick="document.getElementById('steam-id-input').value = 'STEAM_0:0:12345678'">STEAM_0:0:12345678</span>
+                        <span onclick="document.getElementById('steam-id-input').value = '76561197960287930'">76561197960287930</span>
+                        <span onclick="document.getElementById('steam-id-input').value = 'gabelogannewell'">gabelogannewell</span>
+                    </div>
+                </div>
+                <div id="profile-error" class="error-message" style="display: none;"></div>
+            </div>
+        </section>
+
+        <section id="topup" class="topup-section">
+            <div class="container">
+                <h2>Пополнение баланса Steam</h2>
+                <div class="payment-form">
+                    <div class="amount-selection">
+                        <h3>Выберите сумму пополнения</h3>
+                        <div class="amount-options">
+                            <button class="amount-btn" data-amount="100">100 ₽</button>
+                            <button class="amount-btn" data-amount="300">300 ₽</button>
+                            <button class="amount-btn" data-amount="500">500 ₽</button>
+                            <button class="amount-btn" data-amount="1000">1000 ₽</button>
+                            <button class="amount-btn" data-amount="2000">2000 ₽</button>
+                        </div>
+                        <div class="custom-amount">
+                            <label for="custom-amount">Или введите свою сумму:</label>
+                            <input type="number" id="custom-amount" min="10" max="10000" placeholder="Сумма в рублях">
+                        </div>
+                    </div>
+
+                    <div class="email-input">
+                        <label for="user-email">Email для получения чека:</label>
+                        <input type="email" id="user-email" placeholder="your@email.com" required>
+                    </div>
+
+                    <div class="payment-summary">
+                        <p>Сумма к оплате: <span id="payment-amount">0</span> ₽</p>
+                        <p>Комиссия: <span id="payment-fee">0</span> ₽</p>
+                        <p class="total">Итого: <span id="payment-total">0</span> ₽</p>
+                    </div>
+
+                    <button id="pay-button" class="pay-btn" disabled>Перейти к оплате</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="history" class="history-section">
+            <div class="container">
+                <h2>История пополнений</h2>
+                <div class="history-list">
+                    <p id="no-history">История пополнений пуста</p>
+                    <div id="history-items" class="history-items"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Curwe Steam. Все права защищены.</p>
+            <p class="demo-indicator">Демо-версия системы пополнения Steam баланса</p>
+        </div>
+    </footer>
+
+    <!-- Модальное окно оплаты -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Оплата через Mock Payment Service</h2>
+            <div class="demo-payment">
+                <h3>Детали платежа:</h3>
+                <div class="payment-details">
+                    <p><strong>Сумма:</strong> <span id="demo-amount">0</span> ₽</p>
+                    <p><strong>Получатель:</strong> Steam аккаунт <span id="demo-steam-id">Не указан</span></p>
+                    <p><strong>Steam ник:</strong> <span id="demo-steam-nickname">Не указан</span></p>
+                    <p><strong>Email для чека:</strong> <span id="demo-email">Не указан</span></p>
+                    <p><strong>Комиссия:</strong> <span id="demo-fee">0</span> ₽</p>
+                    <p><strong>Итого к оплате:</strong> <span id="demo-total">0</span> ₽</p>
+                </div>
+                <div class="payment-methods">
+                    <h4>Выберите способ оплаты:</h4>
+                    <div class="payment-method-options">
+                        <label class="payment-method">
+                            <input type="radio" name="payment-method" value="card" checked>
+                            <span>💳 Банковская карта</span>
+                        </label>
+                        <label class="payment-method">
+                            <input type="radio" name="payment-method" value="qiwi">
+                            <span>🥝 QIWI Кошелек</span>
+                        </label>
+                        <label class="payment-method">
+                            <input type="radio" name="payment-method" value="yoomoney">
+                            <span>💎 ЮMoney</span>
+                        </label>
+                        <label class="payment-method">
+                            <input type="radio" name="payment-method" value="mobile">
+                            <span>📱 Мобильный платеж</span>
+                        </label>
+                    </div>
+                </div>
+                <button id="confirm-payment" class="confirm-btn">Подтвердить оплату</button>
+                <button id="cancel-payment" class="cancel-btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно загрузки -->
+    <div id="loading-modal" class="modal">
+        <div class="modal-content loading-content">
+            <div class="loading-spinner"></div>
+            <p id="loading-text">Загрузка профиля Steam...</p>
+        </div>
+    </div>
+
+    <!-- Модальное окно статуса платежа -->
+    <div id="payment-status-modal" class="modal">
+        <div class="modal-content status-content">
+            <div id="payment-status-icon"></div>
+            <h3 id="payment-status-title">Статус платежа</h3>
+            <p id="payment-status-message"></p>
+            <button id="payment-status-close" class="status-close-btn">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Подключаем скрипты в правильном порядке -->
+    <script src="js/steam-api.js"></script>
+    <script src="js/mock-payment-service.js"></script>
+    <script src="js/email.js"></script>
+    <script src="js/payment.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
